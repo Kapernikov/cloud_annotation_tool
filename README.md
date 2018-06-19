@@ -1,10 +1,5 @@
 # L-CAS 3D Point Cloud Annotation Tool #
 
-[![Build Status](https://travis-ci.org/yzrobot/cloud_annotation_tool.svg?branch=master)](https://travis-ci.org/yzrobot/cloud_annotation_tool)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ecd31982b8ef4e21b096d7ded0979bb8)](https://www.codacy.com/app/yzrobot/cloud_annotation_tool?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=yzrobot/cloud_annotation_tool&amp;utm_campaign=Badge_Grade)
-[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-
-![alt tag](https://github.com/yzrobot/cloud_annotation_tool/blob/master/images/screenshot.png)
 
 * Maintainer status: maintained
 * Author: Zhi Yan
@@ -13,11 +8,19 @@
 
 The tool provides a semi-automatic labeling function, means the 3D point cloud data (loaded from the PCD file) is first clustered to provide candidates for labeling, each candidate being a point cluster. Then, the user annotating the data, can label each object by indicating candidate's ID, category, and visibility. A flowchart of this process is shown below.
 
-![alt tag](https://github.com/yzrobot/cloud_annotation_tool/blob/master/images/flowchart.png)
 
 ## Compiling ##
 
 ### Prerequisites ###
+
+#### New
+
+* Qt 5.3: `sudo apt-get install qtbase5-dev qt5-qmake`
+* VTK 6.2: `sudo apt-get install libvtk6-dev lib libvtk6-qt-dev`
+* PCL 1.8.1: From Source
+
+
+#### Old
 
 * Qt 4.x: `sudo apt-get install libqt4-dev qt4-qmake`
 * VTK 5.x: `sudo apt-get install libvtk5-dev`
