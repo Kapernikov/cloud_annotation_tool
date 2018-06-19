@@ -1,9 +1,18 @@
-cmake_minimum_required (VERSION 2.6 FATAL_ERROR)
+cmake_minimum_required (VERSION 2.8.11 FATAL_ERROR)
 
-project      (cloud_annotation_tool)
-find_package (Qt4 REQUIRED)
+project(cloud_annotation_tool)
+
+# init_qt: Let's do the CMake job for us
+set(CMAKE_AUTOMOC ON) # For meta object compiler
+set(CMAKE_AUTORCC ON) # Resource files
+set(CMAKE_AUTOUIC ON) # UI files
+
+# Find includes in corresponding build directories
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+find_package (Qt5 REQUIRED COMPONENTS Widgets Core)
 find_package (VTK REQUIRED)
-find_package (PCL 1.2 REQUIRED)
+find_package (PCL 1.8 REQUIRED)
 
 include_directories (${PCL_INCLUDE_DIRS})
 link_directories    (${PCL_LIBRARY_DIRS})
@@ -15,16 +24,7 @@ set (project_FORMS     viewer.ui)
 set (project_RESOURCES resources.qrc)
 set (VTK_LIBRARIES     vtkRendering vtkGraphics vtkHybrid QVTK)
 
-QT4_WRAP_CPP      (project_HEADERS_MOC   ${project_HEADERS})
-QT4_WRAP_UI       (project_FORMS_HEADERS ${project_FORMS})
-QT4_ADD_RESOURCES (project_RESOURCES_RCC ${project_RESOURCES})
 
-INCLUDE         (${QT_USE_FILE})
-ADD_DEFINITIONS (${QT_DEFINITIONS})
-
-ADD_EXECUTABLE (cloud_annotation_tool ${project_SOURCES}
-                                      ${project_FORMS_HEADERS}
-                                      ${project_HEADERS_MOC}
-                                      ${project_RESOURCES_RCC})
-
-TARGET_LINK_LIBRARIES (cloud_annotation_tool ${QT_LIBRARIES} ${PCL_LIBRARIES} ${VTK_LIBRARIES})
+ADD_EXECUTABLE (${PROJECT_NAME} ${project_SOURCES})
+TARGET_LINK_LIBRARIES (${PROJECT_NAME} ${PCL_LIBRARIES})
+qt5_use_modules(${PROJECT_NAME} Widgets Core)
