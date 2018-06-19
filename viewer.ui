@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>936</width>
-    <height>579</height>
+    <width>989</width>
+    <height>643</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -245,7 +245,7 @@
           <item row="1" column="1">
            <widget class="QLineEdit" name="bottominterval">
             <property name="text">
-             <string>0.2</string>
+             <string>0</string>
             </property>
            </widget>
           </item>
@@ -259,7 +259,7 @@
           <item row="2" column="1">
            <widget class="QLineEdit" name="topinterval">
             <property name="text">
-             <string>5.0</string>
+             <string>0</string>
             </property>
            </widget>
           </item>
@@ -387,7 +387,7 @@
      </layout>
     </item>
     <item>
-     <widget class="QVTKWidget" name="qvtkWidget">
+     <widget class="QVTKWidget" name="qvtkWidget" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>50</horstretch>
