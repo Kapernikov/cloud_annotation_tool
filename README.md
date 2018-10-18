@@ -1,13 +1,21 @@
-# L-CAS 3D Point Cloud Annotation Tool #
+# adapted L-CAS 3D Point Cloud Annotation Tool / KPV modification Frank Dekervel #
 
+* status: unfinished (does not work yet)
 
-* Maintainer status: maintained
-* Author: Zhi Yan
-* License: CC BY-NC-SA 4.0
-* Dataset: [https://lcas.lincoln.ac.uk/wp/research/data-sets-software/l-cas-3d-point-cloud-people-dataset/](https://lcas.lincoln.ac.uk/wp/research/data-sets-software/l-cas-3d-point-cloud-people-dataset/)
+* forked from https://github.com/lesterlo/cloud_annotation_tool which was
+  forked from https://github.com/yzrobot/cloud_annotation_tool
 
-The tool provides a semi-automatic labeling function, means the 3D point cloud data (loaded from the PCD file) is first clustered to provide candidates for labeling, each candidate being a point cluster. Then, the user annotating the data, can label each object by indicating candidate's ID, category, and visibility. A flowchart of this process is shown below.
+* modified the annotation process so that you can do point-by-point
+  annotation (no clustering done in advance, you just get a brush to "paint"
+  points)
 
+* i had to modify the tool to use QVTKOpenGLWidget instead of QVTKWidget
+  (because otherwise point picking does not work reliably)
+
+## Running ##
+
+if you get the following error: `vtkShaderProgram (0x556d0534a670): 0:1(10): error: GLSL 1.50 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.00 ES, 3.00 ES, 3.10 ES, and 3.20 ES`
+then run the tool as follows: MESA_GL_VERSION_OVERRIDE=3.2 ./cloud_annotation_tool
 
 ## Compiling ##
 
@@ -16,15 +24,8 @@ The tool provides a semi-automatic labeling function, means the 3D point cloud d
 #### New
 
 * Qt 5.3: `sudo apt-get install qtbase5-dev qt5-qmake`
-* VTK 6.2: `sudo apt-get install libvtk6-dev lib libvtk6-qt-dev`
-* PCL 1.8.1: From Source
-
-
-#### Old
-
-* Qt 4.x: `sudo apt-get install libqt4-dev qt4-qmake`
-* VTK 5.x: `sudo apt-get install libvtk5-dev`
-* PCL 1.7: `sudo apt-get install libpcl-1.7-all-dev`
+* VTK 8.1: please compile from master
+* PCL MASTER branch: From Source git master branch of pcl
 
 ### Build script ###
 
