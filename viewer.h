@@ -22,6 +22,7 @@
 #include <pcl/visualization/pcl_visualizer.h>
 // Visualization Toolkit (VTK)
 #include <vtkRenderWindow.h>
+#include <vtkGenericOpenGLRenderWindow.h>
 
 typedef struct feature {
   int id;
@@ -47,14 +48,21 @@ class CloudViewer: public QMainWindow {
     void reloadButtonClicked();
     void nextBoxChecked();
     void fileItemChanged();
+    void painted(double x, double y, double z, long pointid);
     
  protected:
     boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, cloud_tmp;
-    
-    void clustering(std::string file_name);
-    void featureExtraction(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
-    
+    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr colorize(pcl::PointCloud<pcl::PointXYZ> &source, int r, int g, int b);
+    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud, cloud_ann;
+    std::map<std::string, pcl::PointCloud<pcl::PointXYZ>::Ptr> segments;
+    std::map<std::string, pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr> kdtrees;
+    void movePointToAnn(double x, double y, double z, long pointid);
+    void createSegmentFromAnn(std::string segment_name);
+
+
+    void loadFile(std::string file_name);
+    pcl::KdTreeFLANN<pcl::PointXYZRGBA> kdtree;
+
  private:
     Ui::CloudViewer *ui;
     QString load_file_path, current_label_path;
@@ -65,9 +73,13 @@ class CloudViewer: public QMainWindow {
     bool downsampling;
     bool removing_planes;
     
+    vtkSmartPointer <vtkGenericOpenGLRenderWindow> _renderWindow;
+
     std::vector<Feature> features;
     std::vector< std::vector<std::string> > labels;
     std::fstream label_file;
+
+
 };
 
 #endif // VIEWER_H

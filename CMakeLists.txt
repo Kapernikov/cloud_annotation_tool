@@ -12,13 +12,13 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 find_package (Qt5 REQUIRED COMPONENTS Widgets Core)
 find_package (VTK REQUIRED)
-find_package (PCL 1.8 REQUIRED)
+find_package (PCL 1.7 REQUIRED)
 
 include_directories (${PCL_INCLUDE_DIRS})
 link_directories    (${PCL_LIBRARY_DIRS})
 add_definitions     (${PCL_DEFINITIONS})
 
-set (project_SOURCES   main.cpp viewer.cpp)
+set (project_SOURCES   main.cpp viewer.cpp annotatorinteractor.cpp)
 set (project_HEADERS   viewer.h)
 set (project_FORMS     viewer.ui)
 set (project_RESOURCES resources.qrc)
