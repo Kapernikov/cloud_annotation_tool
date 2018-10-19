@@ -17,6 +17,12 @@
 if you get the following error: `vtkShaderProgram (0x556d0534a670): 0:1(10): error: GLSL 1.50 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.00 ES, 3.00 ES, 3.10 ES, and 3.20 ES`
 then run the tool as follows: MESA_GL_VERSION_OVERRIDE=3.2 ./cloud_annotation_tool
 
+* open a point cloud
+* create a new segment by filling in object id and object class and clicking add
+* click on the pointcloud and zoom it to the right place (use the "f" key to fly to a point)
+* to add points to the cluster, move your mouse while holding the "p" key. to remove points from the cluster, move your mouse by holding the "e" key
+* the GUI saves a json file every time you switch to another cluster (so switch to another cluster before quitting). the json file is also load back when you open the pcd file
+
 ## Compiling and running using a docker image ##
 
 * build the docker image:  `docker build -t vtk8_pclmaster docker/`
