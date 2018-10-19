@@ -26,6 +26,7 @@
 #include "annotatorinteractor.h"
 #include <tuple>
 #include "json.hpp"
+#include <qmenu.h>
 
 using nlohmann::json;
 
@@ -101,6 +102,8 @@ class CloudViewer: public QMainWindow {
     void colorizeCloud(pcl::PointCloud<pcl::PointXYZRGBA> &c, char r, char g, char b, char a);
     void saveJson();
 
+    void confirmDeleteCurrentCluster();
+    void renameCurrentCluster();
 
     void loadFile(std::string file_name);
     pcl::KdTreeFLANN<pcl::PointXYZRGBA> kdtree;
@@ -141,6 +144,8 @@ private:
     const int pasCluster_G = 127;
     const int pasCluster_B = 0;
 
+
+    std::shared_ptr<QMenu> context;
 
 
 };

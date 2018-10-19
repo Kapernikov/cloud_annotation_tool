@@ -2,6 +2,8 @@
 #include "build/ui_viewer.h"
 #include "annotatorinteractor.h"
 #include "vtkGenericOpenGLRenderWindow.h"
+#include "qmessagebox.h"
+#include "qinputdialog.h"
 
 #include <pcl/visualization/common/actor_map.h>
 
@@ -33,6 +35,40 @@ void CloudViewer::saveJson()
     std::ofstream out(fn);
     out << j;
     out.close();
+}
+
+void CloudViewer::confirmDeleteCurrentCluster()
+{
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "Test", QString::fromStdString("Are you sure you want to delete " +  currentCluster.objectid + "/" + currentCluster.oclass + "?"),
+                                  QMessageBox::Yes|QMessageBox::No);
+    if (reply == QMessageBox::Yes) {
+        auto cc = currentCluster;
+        currentCluster.objectid = "";
+        currentCluster.oclass = "";
+        segments.erase(cc);
+        ui->tblClusters->removeRow(ui->tblClusters->currentRow()); // this triggers saving again, so we must first erase the key of currentCluster
+    }
+}
+
+void CloudViewer::renameCurrentCluster()
+{
+    bool ok;
+    QString oldId = QString::fromStdString(currentCluster.objectid);
+    QString newId = QInputDialog::getText(this,"New ID","Enter new object ID", QLineEdit::Normal,
+                                          oldId,&ok);
+    if (ok & (oldId != newId)) {
+        auto r = ui->tblClusters->selectionModel()->selectedRows();
+        if (r.size() > 0) {
+            int sel_row = r.at(0).row();
+            auto cc = currentCluster;
+            ui->tblClusters->setItem( sel_row ,
+                                      1, new QTableWidgetItem(newId));
+            currentCluster.objectid = newId.toStdString();
+            saveCurrentCluster();
+            segments.erase(cc);
+        }
+    }
 }
 
 CloudViewer::CloudViewer ( QWidget *parent ) :
@@ -82,6 +118,12 @@ CloudViewer::CloudViewer ( QWidget *parent ) :
     connect ( ui->btnStartStop, &QPushButton::clicked, this, &CloudViewer::labelButtonClicked );
     connect ( ui->checkBox_next, &QCheckBox::stateChanged, this, &CloudViewer::nextBoxChecked );
     connect ( ui->listWidget_files, &QListWidget::itemSelectionChanged, this, &CloudViewer::fileItemChanged );
+
+    context.reset(new QMenu(this));
+    connect(context->addAction("Rename cluster"), &QAction::triggered, [this]() { this->renameCurrentCluster();});
+    connect(context->addAction("Delete cluster"), &QAction::triggered, [this]() { this->confirmDeleteCurrentCluster();});
+    ui->tblClusters->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect (ui->tblClusters, &QTableWidget::customContextMenuRequested, [this](const QPoint& p) { this->context->exec(this->ui->tblClusters->mapToGlobal(p));});
 }
 
 bool CloudViewer::hasSegment(std::string objectClass, std::string objectId)
@@ -124,18 +166,22 @@ void CloudViewer::loadButtonClicked()
 
 void CloudViewer::labelButtonClicked()
 {
+    QStringList labels;
+    labels << tr("Class") << tr("Id") << tr("#Points");
+    ui->tblClusters->setHorizontalHeaderLabels(labels);
+
     QString object_id = ui->txtObjectId->text();
     QString object_class = ui->cmbClass->currentText();
     ui->tblClusters->insertRow ( ui->tblClusters->rowCount() );
     ui->tblClusters->setItem   ( ui->tblClusters->rowCount()-1,
-                             0,
-                             new QTableWidgetItem(object_class));
+                                 0,
+                                 new QTableWidgetItem(object_class));
     ui->tblClusters->setItem   ( ui->tblClusters->rowCount()-1,
-                             1,
-                             new QTableWidgetItem(object_id));
+                                 1,
+                                 new QTableWidgetItem(object_id));
     ui->tblClusters->setItem   ( ui->tblClusters->rowCount()-1,
-                             2,
-                             new QTableWidgetItem("0"));
+                                 2,
+                                 new QTableWidgetItem("0"));
     ui->tblClusters->selectRow(ui->tblClusters->rowCount() - 1);
     saveCurrentCluster();
     colorizeCloud(*cloud,255,255,255,255);
@@ -254,9 +300,9 @@ void CloudViewer::saveCurrentCluster()
     std::cout << "saved segment " << currentCluster.objectid << " with " << cluster_indices.size() << " points" << std::endl;
     for (int idx=0; idx < ui->tblClusters->rowCount() ; idx++) {
         auto oclass =  ui->tblClusters->item( idx,
-                                 0)->text().toStdString();
+                                              0)->text().toStdString();
         auto objectid =  ui->tblClusters->item( idx,
-                                 1)->text().toStdString();
+                                                1)->text().toStdString();
         if (oclass == currentCluster.oclass && objectid == currentCluster.objectid) {
             ui->tblClusters->item(idx, 2)->setText(QString::number(cluster_indices.size()));
         }
@@ -319,6 +365,10 @@ void CloudViewer::loadFile ( std::string file_name )
     //col ( cloud, 255, 255, 255 );
 
     ui->tblClusters->clear();
+    QStringList labels;
+    labels << tr("Class") << tr("Id") << tr("#Points");
+    ui->tblClusters->setHorizontalHeaderLabels(labels);
+
     std::string fn = file_name;
     fn += "_labels.json";
     std::ifstream f(fn.c_str());
@@ -330,14 +380,14 @@ void CloudViewer::loadFile ( std::string file_name )
 
             ui->tblClusters->insertRow ( ui->tblClusters->rowCount() );
             ui->tblClusters->setItem   ( ui->tblClusters->rowCount()-1,
-                                     0,
-                                     new QTableWidgetItem(QString::fromStdString(s.first.oclass)));
+                                         0,
+                                         new QTableWidgetItem(QString::fromStdString(s.first.oclass)));
             ui->tblClusters->setItem   ( ui->tblClusters->rowCount()-1,
-                                     1,
-                                     new QTableWidgetItem(QString::fromStdString(s.first.objectid)));
+                                         1,
+                                         new QTableWidgetItem(QString::fromStdString(s.first.objectid)));
             ui->tblClusters->setItem   ( ui->tblClusters->rowCount()-1,
-                                     2,
-                                     new QTableWidgetItem(QString::number(s.second.size())));
+                                         2,
+                                         new QTableWidgetItem(QString::number(s.second.size())));
         }
     }
 
@@ -351,19 +401,19 @@ void CloudViewer::loadFile ( std::string file_name )
     pcl::compute3DCentroid ( *cloud, centroid );
 
     viewer->setCameraPosition (
-        centroid[0],
-        centroid[1] + 2,
-        centroid[2] + 100,
+                centroid[0],
+            centroid[1] + 2,
+            centroid[2] + 100,
 
-        centroid[0],
-        centroid[1],
-        centroid[2],
+            centroid[0],
+            centroid[1],
+            centroid[2],
 
-        0,
-        1,
-        0,
-        0
-    );
+            0,
+            1,
+            0,
+            0
+            );
 
     std::cout << "centroid: " << centroid[0] << " " << centroid[1] << " " << centroid[2] << std::endl;
     _renderWindow->Render();
@@ -385,9 +435,9 @@ void CloudViewer::on_tblClusters_itemSelectionChanged()
     if (r.size() > 0) {
         int row = r.at(0).row();
         auto oclass =  ui->tblClusters->item( row,
-                                 0)->text().toStdString();
+                                              0)->text().toStdString();
         auto objectid =  ui->tblClusters->item( row,
-                                 1)->text().toStdString();
+                                                1)->text().toStdString();
         saveCurrentCluster();
         loadCluster(oclass, objectid);
     }
