@@ -79,6 +79,7 @@ class CloudViewer: public QMainWindow {
   
  public:
   explicit CloudViewer(QWidget *parent = 0);
+  bool hasSegment(std::string objectClass, std::string objectId);
   ~CloudViewer();
   
   public slots:
@@ -106,9 +107,11 @@ class CloudViewer: public QMainWindow {
 
 
     private slots:
-    void on_tblClusters_itemSelectionChanged();
+    void on_cmbClass_currentTextChanged(const QString &arg1);
 
     private slots:
+    void on_txtObjectId_textChanged(const QString &arg1);
+    void on_tblClusters_itemSelectionChanged();
     void on_spPointPicker_valueChanged(double arg1);
 
 private:

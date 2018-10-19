@@ -84,6 +84,18 @@ CloudViewer::CloudViewer ( QWidget *parent ) :
     connect ( ui->listWidget_files, &QListWidget::itemSelectionChanged, this, &CloudViewer::fileItemChanged );
 }
 
+bool CloudViewer::hasSegment(std::string objectClass, std::string objectId)
+{
+    ClusterKey k;
+    k.oclass = objectClass;
+    k.objectid = objectId;
+    if (segments.count(k) > 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 CloudViewer::~CloudViewer()
 {
     delete ui;
@@ -129,7 +141,7 @@ void CloudViewer::labelButtonClicked()
     colorizeCloud(*cloud,255,255,255,255);
     currentCluster.objectid = object_id.toStdString();
     currentCluster.oclass = object_class.toStdString();
-
+    on_txtObjectId_textChanged(QString("boo"));
 }
 
 void CloudViewer::nextBoxChecked()
@@ -379,4 +391,23 @@ void CloudViewer::on_tblClusters_itemSelectionChanged()
         saveCurrentCluster();
         loadCluster(oclass, objectid);
     }
+}
+
+void CloudViewer::on_txtObjectId_textChanged(const QString &arg1)
+{
+    std::string oid = ui->txtObjectId->text().toStdString();
+    std::string oclass = ui->cmbClass->currentText().toStdString();
+    bool okay = true;
+    if (oid == "" || oclass == "") {
+        okay = false;
+    }
+    if (hasSegment(oclass,oid)) {
+        okay = false;
+    }
+    ui->btnStartStop->setEnabled(okay);
+}
+
+void CloudViewer::on_cmbClass_currentTextChanged(const QString &arg1)
+{
+    on_txtObjectId_textChanged(arg1);
 }
