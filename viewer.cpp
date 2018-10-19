@@ -58,6 +58,7 @@ void CloudViewer::resetClippingSpinboxes()
 void CloudViewer::updateCameraClipping()
 {
     if (ui->chkEnableClipping->isChecked()) {
+        interactorStyle->SetAutoAdjustCameraClippingRange (false);
         _renderWindow->GetRenderers()->GetFirstRenderer()->ResetCameraClippingRange(
                     ui->spMinX->value(),ui->spMaxX->value(),
                     ui->spMinY->value(),ui->spMaxY->value(),
@@ -66,6 +67,7 @@ void CloudViewer::updateCameraClipping()
         viewer->setCameraClipDistances(ui->spMinD->value(),ui->spMaxD->value());
         _renderWindow->Render();
     } else {
+        interactorStyle->SetAutoAdjustCameraClippingRange (true);
         _renderWindow->GetRenderers()->GetFirstRenderer()->ResetCameraClippingRange();
         _renderWindow->Render();
     }
