@@ -1,6 +1,6 @@
 # adapted L-CAS 3D Point Cloud Annotation Tool / KPV modification Frank Dekervel #
 
-* status: unfinished (does not work yet)
+* status: unfinished (works, saving labels to json, but buggy)
 
 * forked from https://github.com/lesterlo/cloud_annotation_tool which was
   forked from https://github.com/yzrobot/cloud_annotation_tool
