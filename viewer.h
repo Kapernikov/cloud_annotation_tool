@@ -101,6 +101,8 @@ class CloudViewer: public QMainWindow {
     void loadCluster(std::string oclass, std::string objectid);
     void colorizeCloud(pcl::PointCloud<pcl::PointXYZRGBA> &c, char r, char g, char b, char a);
     void saveJson();
+    void resetClippingSpinboxes();
+    void updateCameraClipping();
 
     void confirmDeleteCurrentCluster();
     void renameCurrentCluster();

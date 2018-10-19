@@ -18,6 +18,9 @@
 * sometimes after panning/zooming/flying the cloud "looses" a number of points. looks like a VTK
   bug. Save your data and reopen the app, no data is lost.
 
+* clipping settings do not work properly yet
+
+
 ## Running ##
 
 if you get the following error: `vtkShaderProgram (0x556d0534a670): 0:1(10): error: GLSL 1.50 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.00 ES, 3.00 ES, 3.10 ES, and 3.20 ES`

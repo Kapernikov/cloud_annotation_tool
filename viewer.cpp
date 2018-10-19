@@ -37,6 +37,40 @@ void CloudViewer::saveJson()
     out.close();
 }
 
+void CloudViewer::resetClippingSpinboxes()
+{
+    std::vector<pcl::visualization::Camera> cams;
+    viewer->getCameras(cams);
+    auto fc = cams.at(0);
+
+    pcl::PointXYZRGBA minPt, maxPt;
+    pcl::getMinMax3D (*cloud, minPt, maxPt);
+    ui->spMinX->setValue(minPt.x);
+    ui->spMaxX->setValue(maxPt.x);
+    ui->spMinY->setValue(minPt.y);
+    ui->spMaxY->setValue(maxPt.y);
+    ui->spMinZ->setValue(minPt.z);
+    ui->spMaxZ->setValue(maxPt.z);
+    ui->spMinD->setValue(fc.clip[0]);
+    ui->spMaxD->setValue(fc.clip[1]);
+}
+
+void CloudViewer::updateCameraClipping()
+{
+    if (ui->chkEnableClipping->isChecked()) {
+        _renderWindow->GetRenderers()->GetFirstRenderer()->ResetCameraClippingRange(
+                    ui->spMinX->value(),ui->spMaxX->value(),
+                    ui->spMinY->value(),ui->spMaxY->value(),
+                    ui->spMinZ->value(),ui->spMaxZ->value()
+        );
+        viewer->setCameraClipDistances(ui->spMinD->value(),ui->spMaxD->value());
+        _renderWindow->Render();
+    } else {
+        _renderWindow->GetRenderers()->GetFirstRenderer()->ResetCameraClippingRange();
+        _renderWindow->Render();
+    }
+}
+
 void CloudViewer::confirmDeleteCurrentCluster()
 {
     QMessageBox::StandardButton reply;
@@ -155,6 +189,29 @@ CloudViewer::CloudViewer ( QWidget *parent ) :
     connect(context->addAction("Delete cluster"), &QAction::triggered, [this]() { this->confirmDeleteCurrentCluster();});
     ui->tblClusters->setContextMenuPolicy(Qt::CustomContextMenu);
     connect (ui->tblClusters, &QTableWidget::customContextMenuRequested, [this](const QPoint& p) { this->context->exec(this->ui->tblClusters->mapToGlobal(p));});
+
+    auto func = [this](double d) {if (this->ui->chkEnableClipping->isChecked()) { updateCameraClipping(); }};
+    connect( ui->chkEnableClipping, &QCheckBox::toggled, [this]() {
+        bool b = this->ui->chkEnableClipping->isChecked();
+        this->ui->spMinX->setEnabled(b);
+        this->ui->spMaxX->setEnabled(b);
+        this->ui->spMinY->setEnabled(b);
+        this->ui->spMaxY->setEnabled(b);
+        this->ui->spMinZ->setEnabled(b);
+        this->ui->spMaxZ->setEnabled(b);
+        this->ui->spMinD->setEnabled(b);
+        this->ui->spMaxD->setEnabled(b);
+        this->updateCameraClipping();
+    });
+    connect( ui->spMinX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), func);
+    connect( ui->spMaxX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), func);
+    connect( ui->spMinY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), func);
+    connect( ui->spMaxY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), func);
+    connect( ui->spMinZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), func);
+    connect( ui->spMaxZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), func);
+    connect( ui->spMinD, QOverload<double>::of(&QDoubleSpinBox::valueChanged), func);
+    connect( ui->spMaxD, QOverload<double>::of(&QDoubleSpinBox::valueChanged), func);
+
 }
 
 bool CloudViewer::hasSegment(std::string objectClass, std::string objectId)
@@ -452,6 +509,8 @@ void CloudViewer::loadFile ( std::string file_name )
     std::cout << "centroid: " << centroid[0] << " " << centroid[1] << " " << centroid[2] << std::endl;
     _renderWindow->Render();
     ui->qvtkWidget->update();
+    ui->chkEnableClipping->setChecked(false);
+    resetClippingSpinboxes();
 
 }
 
