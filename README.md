@@ -1,7 +1,5 @@
 # adapted L-CAS 3D Point Cloud Annotation Tool / KPV modification Frank Dekervel #
 
-* status: unfinished (works, saving labels to json, but buggy)
-
 ![Screenshot](screenshot.png?raw=true "Screenshot")
 
 
@@ -14,6 +12,11 @@
 
 * i had to modify the tool to use QVTKOpenGLWidget instead of QVTKWidget
   (because otherwise point picking does not work reliably)
+
+## Remaining issues ##
+
+* sometimes after panning/zooming/flying the cloud "looses" a number of points. looks like a VTK
+  bug. Save your data and reopen the app, no data is lost.
 
 ## Running ##
 

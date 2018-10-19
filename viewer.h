@@ -104,18 +104,17 @@ class CloudViewer: public QMainWindow {
 
     void confirmDeleteCurrentCluster();
     void renameCurrentCluster();
+    void flyToCluster(ClusterKey &key);
+    void flyToSelectedCluster();
+    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getCluster(ClusterKey &key);
 
     void loadFile(std::string file_name);
     pcl::KdTreeFLANN<pcl::PointXYZRGBA> kdtree;
 
 
-    private slots:
+private slots:
     void on_btnSaveCurrent_pressed();
-
-    private slots:
     void on_cmbClass_currentTextChanged(const QString &arg1);
-
-    private slots:
     void on_txtObjectId_textChanged(const QString &arg1);
     void on_tblClusters_itemSelectionChanged();
     void on_spPointPicker_valueChanged(double arg1);

@@ -71,6 +71,35 @@ void CloudViewer::renameCurrentCluster()
     }
 }
 
+pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CloudViewer::getCluster(ClusterKey &key)
+{
+    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr p(new pcl::PointCloud<pcl::PointXYZRGBA>());
+    if (segments.count(key) == 0) {
+        return p;
+    }
+    for (auto idx: segments[key]) {
+        p->points.push_back(cloud->points.at(idx));
+    }
+    return p;
+}
+
+void CloudViewer::flyToCluster(ClusterKey &key)
+{
+    auto c = getCluster(key);
+    if (c->points.size() == 0) {
+        return;
+    }
+    Eigen::Vector4f centroid;
+    pcl::compute3DCentroid ( *c, centroid );
+    interactorStyle->GetInteractor()->FlyTo(interactorStyle->GetCurrentRenderer(), centroid[0], centroid[1], centroid[2]);
+    _renderWindow->Render();
+}
+
+void CloudViewer::flyToSelectedCluster()
+{
+    flyToCluster(currentCluster);
+}
+
 CloudViewer::CloudViewer ( QWidget *parent ) :
     QMainWindow ( parent ),
     ui ( new Ui::CloudViewer )
@@ -120,6 +149,8 @@ CloudViewer::CloudViewer ( QWidget *parent ) :
     connect ( ui->listWidget_files, &QListWidget::itemSelectionChanged, this, &CloudViewer::fileItemChanged );
 
     context.reset(new QMenu(this));
+    connect(context->addAction("Fly to"), &QAction::triggered, [this]() {this->flyToSelectedCluster();});
+    connect(context->addAction("Refresh"), &QAction::triggered, [this]() {this->viewer->updatePointCloud(this->cloud, "cloud");});
     connect(context->addAction("Rename cluster"), &QAction::triggered, [this]() { this->renameCurrentCluster();});
     connect(context->addAction("Delete cluster"), &QAction::triggered, [this]() { this->confirmDeleteCurrentCluster();});
     ui->tblClusters->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -365,8 +396,8 @@ void CloudViewer::loadFile ( std::string file_name )
 
     //pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA>
     //col ( cloud, 255, 255, 255 );
+    ui->tblClusters->model()->removeRows(0, ui->tblClusters->rowCount());
 
-    ui->tblClusters->clear();
     QStringList labels;
     labels << tr("Class") << tr("Id") << tr("#Points");
     ui->tblClusters->setHorizontalHeaderLabels(labels);
@@ -402,6 +433,7 @@ void CloudViewer::loadFile ( std::string file_name )
     Eigen::Vector4f centroid;
     pcl::compute3DCentroid ( *cloud, centroid );
 
+    //interactorStyle->GetInteractor()->FlyTo(interactorStyle->GetCurrentRenderer(), centroid[0], centroid[1], centroid[2]);
     viewer->setCameraPosition (
                 centroid[0],
             centroid[1] + 2,

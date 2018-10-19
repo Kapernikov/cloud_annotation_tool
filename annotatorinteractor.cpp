@@ -21,7 +21,7 @@ void AnnotatorInteractor::Initialize()
 {
     pcl::visualization::PCLVisualizerInteractorStyle::Initialize();
     pp = vtkSmartPointer<vtkPointPicker>::New ();
-    pp->SetTolerance (pp->GetTolerance () * 6);
+    pp->SetTolerance (pointPickerTolerance);
     if (Interactor) {
         Interactor->SetPicker (pp);
     }
@@ -39,6 +39,25 @@ void AnnotatorInteractor::OnKeyDown()
         isPainting = true;
     } else if ((Interactor->GetKeySym ()[0] == 'e' || Interactor->GetKeySym ()[0] == 'E') && !ctrl && !alt && !shift) {
         isErasing = true;
+    } else if (Interactor->GetKeySym()[0] == 'f' || Interactor->GetKeySym()[0] == 'F' && !ctrl && !alt && !shift) {
+        // work around for buggy default "f" key behaviour: use our own picker
+        int x = this->Interactor->GetEventPosition()[0];
+        int y = this->Interactor->GetEventPosition()[1];
+        vtkSmartPointer<vtkPointPicker> pp = vtkSmartPointer<vtkPointPicker>::New ();
+        pp->SetTolerance (getPointPickerTolerance());
+        pp->Pick (x, y, 0.0, this->CurrentRenderer);
+        vtkAbstractPropPicker *picker;
+        vtkAssemblyPath *path = NULL;
+
+        if ((picker = vtkAbstractPropPicker::SafeDownCast (pp)))
+          path = picker->GetPath ();
+        if (path != NULL) {
+            AnimState = VTKIS_ANIM_ON;
+            Interactor->SetNumberOfFlyFrames(0); // animation doesn't work on QVTKOpenGlWidget so don't waste time on it
+            Interactor->FlyTo (CurrentRenderer, picker->GetPickPosition ());
+            AnimState = VTKIS_ANIM_OFF;
+        }
+
     } else {
         pcl::visualization::PCLVisualizerInteractorStyle::OnKeyDown();
     }
