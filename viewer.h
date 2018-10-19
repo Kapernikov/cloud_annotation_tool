@@ -85,6 +85,7 @@ class CloudViewer: public QMainWindow {
     void createSegmentFromAnn(std::string segment_name);
     void saveCurrentCluster();
     void loadCluster(std::string oclass, std::string objectid);
+    void colorizeCloud(pcl::PointCloud<pcl::PointXYZRGBA> &c, char r, char g, char b, char a);
 
 
     void loadFile(std::string file_name);
@@ -117,8 +118,12 @@ private:
 
     const int curCluster_R = 255;
     const int curCluster_G = 0;
+
     const int curCluster_B = 0;
 
+    const int pasCluster_R = 127;
+    const int pasCluster_G = 127;
+    const int pasCluster_B = 0;
 
 
 

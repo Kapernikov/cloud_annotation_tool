@@ -6,13 +6,23 @@
 #include <pcl/visualization/common/actor_map.h>
 
 
-inline void colorizeCloud(pcl::PointCloud<pcl::PointXYZRGBA> &c, char r, char g, char b, char a) {
+void CloudViewer::colorizeCloud(pcl::PointCloud<pcl::PointXYZRGBA> &c, char r, char g, char b, char a) {
     for (auto &pt: c.points) {
         pt.r = r;
         pt.g = g;
         pt.b = b;
         pt.a = a;
     }
+    for (auto &it: segments) {
+        auto &k = it.second;
+        for (auto idx: k) {
+            auto &pt = c.points.at(idx);
+            pt.r = pasCluster_R;
+            pt.g = pasCluster_G;
+            pt.b = pasCluster_B;
+        }
+    }
+
 }
 
 CloudViewer::CloudViewer ( QWidget *parent ) :
