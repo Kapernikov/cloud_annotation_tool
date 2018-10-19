@@ -6,6 +6,14 @@
 #include <pcl/visualization/common/actor_map.h>
 
 
+inline void colorizeCloud(pcl::PointCloud<pcl::PointXYZRGBA> &c, char r, char g, char b, char a) {
+    for (auto &pt: c.points) {
+        pt.r = r;
+        pt.g = g;
+        pt.b = b;
+        pt.a = a;
+    }
+}
 
 CloudViewer::CloudViewer ( QWidget *parent ) :
     QMainWindow ( parent ),
@@ -97,6 +105,8 @@ void CloudViewer::labelButtonClicked()
                              2,
                              new QTableWidgetItem("0"));
     ui->tblClusters->selectRow(ui->tblClusters->rowCount() - 1);
+    saveCurrentCluster();
+    colorizeCloud(*cloud,255,255,255,255);
     currentCluster.objectid = object_id.toStdString();
     currentCluster.oclass = object_class.toStdString();
 
@@ -118,11 +128,13 @@ void CloudViewer::painted ( double x, double y, double z , const long pointid, b
 
 }
 
+
+
 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CloudViewer::colorize(pcl::PointCloud<pcl::PointXYZ> &source, int r, int g, int b)
 {
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr new_p;
     new_p.reset(new pcl::PointCloud<pcl::PointXYZRGBA>());
-    for (auto pt: source.points) {
+    for (auto &pt: source.points) {
         pcl::PointXYZRGBA zpt;
         zpt.x = pt.x;
         zpt.y = pt.y;
@@ -196,6 +208,9 @@ void CloudViewer::movePointToAnn ( double x, double y, double z , long pointid, 
 
 void CloudViewer::saveCurrentCluster()
 {
+    if (currentCluster.objectid == "") {
+        return;
+    }
     std::vector<int> cluster_indices;
     for (size_t idx = 0; idx < cloud->points.size(); idx++) {
         auto &pt = cloud->points.at(idx);
@@ -204,6 +219,35 @@ void CloudViewer::saveCurrentCluster()
         }
     }
     segments[currentCluster] = cluster_indices;
+    std::cout << "saved segment " << currentCluster.objectid << " with " << cluster_indices.size() << " points" << std::endl;
+    for (int idx=0; idx < ui->tblClusters->rowCount() ; idx++) {
+        auto oclass =  ui->tblClusters->item( idx,
+                                 0)->text().toStdString();
+        auto objectid =  ui->tblClusters->item( idx,
+                                 1)->text().toStdString();
+        if (oclass == currentCluster.oclass && objectid == currentCluster.objectid) {
+            ui->tblClusters->item(idx, 2)->setText(QString::number(cluster_indices.size()));
+        }
+    }
+}
+
+void CloudViewer::loadCluster(std::string oclass, std::string objectid) {
+    currentCluster.objectid = objectid;
+    currentCluster.oclass = oclass;
+    colorizeCloud(*cloud, 255,255,255,255);
+
+    if (currentCluster.objectid == "") {
+        return;
+    }
+    auto &idxs = segments[currentCluster];
+    for (auto x: idxs) {
+        auto &pt = cloud->points.at(x);
+        pt.r = curCluster_R;
+        pt.g = curCluster_G;
+        pt.b = curCluster_B;
+    }
+    viewer->updatePointCloud(cloud,"cloud");
+    _renderWindow->Render();
 }
 
 void CloudViewer::loadFile ( std::string file_name )
@@ -273,4 +317,18 @@ void CloudViewer::on_spPointPicker_valueChanged(double arg1)
 {
     interactorStyle->setPointPickerTolerance(arg1);
     interactorStyle->setPainterTolerance(arg1);
+}
+
+void CloudViewer::on_tblClusters_itemSelectionChanged()
+{
+    auto r = ui->tblClusters->selectionModel()->selectedRows();
+    if (r.size() > 0) {
+        int row = r.at(0).row();
+        auto oclass =  ui->tblClusters->item( row,
+                                 0)->text().toStdString();
+        auto objectid =  ui->tblClusters->item( row,
+                                 1)->text().toStdString();
+        saveCurrentCluster();
+        loadCluster(oclass, objectid);
+    }
 }

@@ -84,13 +84,17 @@ class CloudViewer: public QMainWindow {
     void movePointToAnn(double x, double y, double z, long pointid, bool painting);
     void createSegmentFromAnn(std::string segment_name);
     void saveCurrentCluster();
+    void loadCluster(std::string oclass, std::string objectid);
 
 
     void loadFile(std::string file_name);
     pcl::KdTreeFLANN<pcl::PointXYZRGBA> kdtree;
 
 
-private slots:
+    private slots:
+    void on_tblClusters_itemSelectionChanged();
+
+    private slots:
     void on_spPointPicker_valueChanged(double arg1);
 
 private:
