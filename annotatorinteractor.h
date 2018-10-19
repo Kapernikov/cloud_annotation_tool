@@ -21,9 +21,9 @@ public:
     vtkTypeMacro (AnnotatorInteractor, pcl::visualization::PCLVisualizerInteractorStyle)
 
     boost::signals2::connection
-    registerPaintingCallback (boost::function<void (const double, const double, const double, const long)> cb);
+    registerPaintingCallback (boost::function<void (const double, const double, const double, const long, const bool)> cb);
 
-    boost::signals2::signal<void (const double, const double, const double, const long)> paint_signal;
+    boost::signals2::signal<void (const double, const double, const double, const long, const bool)> paint_signal;
 
     void Initialize();
 
@@ -33,6 +33,19 @@ public:
     void OnMouseMove();
 
     bool isPainting = false;
+    bool isErasing = false;
+
+    double getPainterTolerance() const;
+    void setPainterTolerance(double value);
+
+    double getPointPickerTolerance() const;
+    void setPointPickerTolerance(double value);
+
+protected:
+    double pointPickerTolerance = 0.2;
+    double painterTolerance = 0.2;
+    vtkSmartPointer<vtkPointPicker> pp;
+
 };
 
 #endif // ANNOTATORINTERACTOR_H

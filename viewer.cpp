@@ -3,6 +3,10 @@
 #include "annotatorinteractor.h"
 #include "vtkGenericOpenGLRenderWindow.h"
 
+#include <pcl/visualization/common/actor_map.h>
+
+
+
 CloudViewer::CloudViewer ( QWidget *parent ) :
     QMainWindow ( parent ),
     ui ( new Ui::CloudViewer )
@@ -18,7 +22,7 @@ CloudViewer::CloudViewer ( QWidget *parent ) :
     removing_planes = false;
 
 
-    vtkSmartPointer<AnnotatorInteractor> interactorStyle = vtkSmartPointer<AnnotatorInteractor>::New();
+    interactorStyle = vtkSmartPointer<AnnotatorInteractor>::New();
 
     // Set up the QVTK window.
     auto renderer = vtkSmartPointer <vtkRenderer>::New();
@@ -35,24 +39,19 @@ CloudViewer::CloudViewer ( QWidget *parent ) :
     interactorStyle->setShapeActorMap ( viewer->getShapeActorMap() );
     //interactorStyle->setRenderWindow(viewer->getRenderWindow());
     interactorStyle->UseTimersOn();
-    interactorStyle->registerPaintingCallback ( [this] ( double x, double y, double z , long pointid) {
-        painted ( x,y,z, pointid );
+    interactorStyle->registerPaintingCallback ( [this] ( double x, double y, double z , long pointid, bool painting) {
+        painted ( x,y,z, pointid, painting );
     } );
-    //interactorStyle->setUseVbos(viewer->get);
 
 
     viewer->setupInteractor ( ui->qvtkWidget->GetInteractor(), ui->qvtkWidget->GetRenderWindow(), interactorStyle );
-    //viewer->setupInteractor ( ui->qvtkWidget->GetInteractor(), ui->qvtkWidget->GetRenderWindow());
-
-    // Set rend erer window in case no interactor is created
 
 
     ui->qvtkWidget->update();
 
     // Connect UI and their functions.
     connect ( ui->pushButton_load, &QPushButton::clicked, this, &CloudViewer::loadButtonClicked );
-    connect ( ui->pushButton_label, &QPushButton::clicked, this, &CloudViewer::labelButtonClicked );
-    connect ( ui->pushButton_reload, &QPushButton::clicked, this, &CloudViewer::reloadButtonClicked );
+    connect ( ui->btnStartStop, &QPushButton::clicked, this, &CloudViewer::labelButtonClicked );
     connect ( ui->checkBox_next, &QCheckBox::stateChanged, this, &CloudViewer::nextBoxChecked );
     connect ( ui->listWidget_files, &QListWidget::itemSelectionChanged, this, &CloudViewer::fileItemChanged );
 }
@@ -85,106 +84,22 @@ void CloudViewer::loadButtonClicked()
 
 void CloudViewer::labelButtonClicked()
 {
-    if ( ui->listWidget_files->currentRow() == -1 ) {
-        return;
-    }
+    QString object_id = ui->txtObjectId->text();
+    QString object_class = ui->cmbClass->currentText();
+    ui->tblClusters->insertRow ( ui->tblClusters->rowCount() );
+    ui->tblClusters->setItem   ( ui->tblClusters->rowCount()-1,
+                             0,
+                             new QTableWidgetItem(object_class));
+    ui->tblClusters->setItem   ( ui->tblClusters->rowCount()-1,
+                             1,
+                             new QTableWidgetItem(object_id));
+    ui->tblClusters->setItem   ( ui->tblClusters->rowCount()-1,
+                             2,
+                             new QTableWidgetItem("0"));
+    ui->tblClusters->selectRow(ui->tblClusters->rowCount() - 1);
+    currentCluster.objectid = object_id.toStdString();
+    currentCluster.oclass = object_class.toStdString();
 
-    if ( QDir ( current_label_path ).exists() == false ) {
-        QDir().mkpath ( current_label_path );
-    }
-
-    std::string string_to, line_to, line_in;
-    for ( std::vector<Feature>::iterator it = features.begin(); it != features.end(); ++it ) {
-        if ( boost::to_string ( it->id ) == ui->lineEdit_object_id->text().toStdString() ) {
-            bool new_label = true, change_label = false;
-            line_to = boost::to_string ( it->centroid[0] )+" "+boost::to_string ( it->centroid[1] )+" "+boost::to_string ( it->centroid[2] )+" "+
-                      boost::to_string ( it->min[0] )+" "+boost::to_string ( it->min[1] )+" "+boost::to_string ( it->min[2] )+" "+
-                      boost::to_string ( it->max[0] )+" "+boost::to_string ( it->max[1] )+" "+boost::to_string ( it->max[2] );
-            label_file.open ( ( current_label_path+"/"+QFileInfo ( ui->listWidget_files->currentItem()->text() ).completeBaseName()+".txt" ).toStdString().c_str(), std::fstream::in );
-            while ( std::getline ( label_file, line_in ) ) {
-                if ( line_in.substr ( line_in.find ( " " )+1, line_in.length()-line_in.find ( " " )-3 ).compare ( line_to ) == 0 ) {
-                    new_label = false;
-                    if ( ui->comboBox_class->currentText().toStdString().compare ( "dontcare" ) == 0 ) {
-                        viewer->removeText3D ( "labeled_text_"+boost::to_string ( it->centroid[0] ) );
-                        viewer->removeShape ( "labeled_box_"+boost::to_string ( it->centroid[0] ) );
-                        ui->label_show->setText ( "<font color=\"blue\">Label removed.</font>" );
-                        continue;
-                    } else {
-                        if ( ui->comboBox_class->currentText().toStdString().compare ( line_in.substr ( 0, line_in.find ( " " ) ) ) == 0 &&
-                                boost::to_string ( ui->comboBox_visibility->currentIndex() ).compare ( line_in.substr ( line_in.length()-1 ) ) == 0 ) {
-                            ui->label_show->setText ( "<font color=\"blue\">Do nothing.</font>" );
-                        } else {
-                            change_label = true;
-                            viewer->removeText3D ( "labeled_text_"+boost::to_string ( it->centroid[0] ) );
-                            viewer->removeShape ( "labeled_box_"+boost::to_string ( it->centroid[0] ) );
-                            ui->label_show->setText ( "<font color=\"blue\">Label changed.</font>" );
-                            continue;
-                        }
-                    }
-                }
-                string_to += line_in+"\n";
-            }
-            if ( new_label || change_label ) {
-                if ( ui->comboBox_class->currentText().toStdString().compare ( "dontcare" ) == 0 ) {
-                    ui->label_show->setText ( "<font color=\"blue\">Do nothing.</font>" );
-                } else {
-                    string_to += ui->comboBox_class->currentText().toStdString()+" "+line_to+" "+
-                                 boost::to_string ( ui->comboBox_visibility->currentIndex() )+"\n";
-                    double r, g, b;
-                    if ( ui->comboBox_class->currentText().toStdString().compare ( "pedestrian" ) == 0 ) {
-                        r=1;
-                        g=0;
-                        b=0;
-                    }
-                    if ( ui->comboBox_class->currentText().toStdString().compare ( "group" ) == 0 )      {
-                        r=0;
-                        g=1;
-                        b=0;
-                    }
-                    if ( ui->comboBox_class->currentText().toStdString().compare ( "wheelchair" ) == 0 ) {
-                        r=0;
-                        g=0;
-                        b=1;
-                    }
-                    if ( ui->comboBox_class->currentText().toStdString().compare ( "cyclist" ) == 0 )    {
-                        r=1;
-                        g=1;
-                        b=0;
-                    }
-                    if ( ui->comboBox_class->currentText().toStdString().compare ( "car" ) == 0 )        {
-                        r=0;
-                        g=1;
-                        b=1;
-                    }
-                    pcl::PointXYZ pos ( it->centroid[0], it->centroid[1], it->max[2] );
-                    viewer->addText3D ( ui->comboBox_class->currentText().toStdString(), pos, 0.2, r, g, b, "labeled_text_"+boost::to_string ( it->centroid[0] ) );
-                    viewer->addCube ( it->min[0], it->max[0], it->min[1], it->max[1], it->min[2], it->max[2], r, g, b, "labeled_box_"+boost::to_string ( it->centroid[0] ) );
-                    viewer->setShapeRenderingProperties ( pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 4, "labeled_box_"+boost::to_string ( it->centroid[0] ) );
-                    viewer->setShapeRenderingProperties ( pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, "labeled_box_"+boost::to_string ( it->centroid[0] ) );
-                    if ( change_label == false ) {
-                        ui->label_show->setText ( "<font color=\"blue\">Label added.</font>" );
-                    }
-                }
-            }
-            label_file.close();
-            label_file.open ( ( current_label_path+"/"+QFileInfo ( ui->listWidget_files->currentItem()->text() ).completeBaseName()+".txt" ).toStdString().c_str(), std::fstream::out | std::fstream::trunc );
-            label_file << string_to;
-            label_file.close();
-            ui->qvtkWidget->update();
-            if ( auto_next ) {
-                ui->listWidget_files->setCurrentRow ( ui->listWidget_files->currentRow()+1 );
-            }
-            return;
-        }
-    }
-    ui->label_show->setText ( "<font color=\"red\">Unknown ID.</font>" );
-}
-
-void CloudViewer::reloadButtonClicked()
-{
-    if ( ui->listWidget_files->currentRow() != -1 ) {
-        fileItemChanged();
-    }
 }
 
 void CloudViewer::nextBoxChecked()
@@ -195,75 +110,11 @@ void CloudViewer::nextBoxChecked()
 void CloudViewer::fileItemChanged()
 {
     loadFile ( ui->listWidget_files->currentItem()->text().toStdString() );
-
-    file_labeled = false;
-    current_label_path = QFileInfo ( ui->listWidget_files->currentItem()->text() ).absolutePath()+"/label";
-    if ( QDir ( current_label_path ).exists() ) {
-        QDirIterator dir_it ( current_label_path, QDirIterator::Subdirectories );
-        QString file;
-        while ( dir_it.hasNext() ) {
-            file = dir_it.next();
-            if ( QFileInfo ( file ).fileName().toStdString().find ( '~' ) == std::string::npos &&
-                    QFileInfo ( file ).completeBaseName() == QFileInfo ( ui->listWidget_files->currentItem()->text() ).completeBaseName() ) {
-                label_file.open ( ( current_label_path+"/"+QFileInfo ( ui->listWidget_files->currentItem()->text() ).completeBaseName()+".txt" ).toStdString().c_str(), std::fstream::in );
-                labels.clear();
-                std::string line;
-                while ( std::getline ( label_file, line ) ) {
-                    std::vector<std::string> params;
-                    boost::split ( params, line, boost::is_any_of ( " " ) );
-                    labels.push_back ( params );
-                    pcl::PointXYZ pos ( atof ( params[1].c_str() ), atof ( params[2].c_str() ), atof ( params[9].c_str() ) );
-                    double r, g, b;
-                    if ( params[0].compare ( "pedestrian" ) == 0 ) {
-                        r=1;
-                        g=0;
-                        b=0;
-                    }
-                    if ( params[0].compare ( "group" ) == 0 )      {
-                        r=0;
-                        g=1;
-                        b=0;
-                    }
-                    if ( params[0].compare ( "wheelchair" ) == 0 ) {
-                        r=0;
-                        g=0;
-                        b=1;
-                    }
-                    if ( params[0].compare ( "cyclist" ) == 0 )    {
-                        r=1;
-                        g=1;
-                        b=0;
-                    }
-                    if ( params[0].compare ( "car" ) == 0 )        {
-                        r=0;
-                        g=1;
-                        b=1;
-                    }
-                    viewer->addText3D ( params[0], pos, 0.2, r, g, b, "labeled_text_"+params[1] );
-                    viewer->addCube ( atof ( params[4].c_str() ), atof ( params[7].c_str() ),
-                                      atof ( params[5].c_str() ), atof ( params[8].c_str() ),
-                                      atof ( params[6].c_str() ), atof ( params[9].c_str() ),
-                                      r, g, b, "labeled_box_"+boost::to_string ( params[1] ) );
-                    viewer->setShapeRenderingProperties ( pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 4, "labeled_box_"+boost::to_string ( params[1] ) );
-                    viewer->setShapeRenderingProperties ( pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, "labeled_box_"+boost::to_string ( params[1] ) );
-                    ui->qvtkWidget->update();
-                }
-                label_file.close();
-                file_labeled = true;
-                ui->label_show->setText ( "<font color=\"blue\">File labeled.</font>" );
-                break;
-            }
-        }
-    }
-    if ( file_labeled == false ) {
-        ui->label_show->setText ( "<font color=\"blue\">File without labels.</font>" );
-    }
 }
 
-void CloudViewer::painted ( double x, double y, double z , const long pointid)
+void CloudViewer::painted ( double x, double y, double z , const long pointid, bool painting)
 {
-    //std::cout << "callback " << x << " " << y << " " << z << " " << pointid << std::endl;
-    movePointToAnn(x, y, z, pointid);
+    movePointToAnn(x, y, z, pointid, painting);
 
 }
 
@@ -285,29 +136,74 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr CloudViewer::colorize(pcl::PointCloud<pc
     return new_p;
 }
 
-void CloudViewer::movePointToAnn ( double x, double y, double z , long pointid)
+void CloudViewer::movePointToAnn ( double x, double y, double z , long pointid, bool painting)
 {
-    const int K=30;
-    const float radius=0.1; // 10cm
+    const int K=50;
+    const float radius=ui->spPainter->value();
     std::vector<int> indices ( K );
     std::vector<float> distances ( K );
     pcl::PointXYZRGBA xyz;
     xyz.x = x; xyz.y =  y; xyz.z = z;
-    if ( kdtree.radiusSearch ( xyz, radius, indices, distances, K ) > 0 ) {
-        for (auto &idx: indices) {
+
+    // no updatePointCloud, too slow
+    // Check to see if this ID entry already exists (has it been already added to the visualizer?)
+    auto cam = viewer->getCloudActorMap();
+    pcl::visualization::CloudActorMap::iterator am_it =cam->find ("cloud");
+    if (am_it == cam->end ()) {
+        std::cout << "cloud not found???" << std::endl;
+        return;
+    }
+    vtkSmartPointer<vtkPolyData> polydata = reinterpret_cast<vtkPolyDataMapper*>(am_it->second.actor->GetMapper ())->GetInput ();
+    vtkDataArray *scalars = polydata->GetPointData()->GetScalars();
+    unsigned char* colors = reinterpret_cast<vtkUnsignedCharArray*>(&(*scalars))->GetPointer (0);
+
+
+    auto nbResults = kdtree.radiusSearch ( xyz, radius, indices, distances, K );
+    std::cout << "got " << nbResults << " points " << std::endl;
+    if (nbResults  > 0 ) {
+        for (int i=0; i<nbResults; i++ ) {
+            auto &idx = indices.at(i);
             auto &pt = cloud->points.at(idx);
             //std::cout << "found point : " << (int)(pt.r) << " " << (int)(pt.g) << " " << (int)(pt.b) << " " << indices.at(0) << " " << pointid <<  std::endl;
-            pt.r = 255;
-            pt.g = 0;
-            pt.b = 0;
+            if (painting) {
+                pt.r = curCluster_R;
+                pt.g = curCluster_G;
+                pt.b = curCluster_B;
+            } else {
+                pt.r = 255;
+                pt.g = 255;
+                pt.b = 255;
+            }
             pt.a = 255;
+            // update vtk data directly to avoid updatePointCloud which is slow
+            size_t j = idx*4;
+            colors[j] = pt.r;
+            colors[j+1] = pt.g;
+            colors[j+2] = pt.b;
+            colors[j+3] = pt.a;
+
         }
     }
-    viewer->updatePointCloud(cloud, "cloud");
+
+
+    scalars->Modified();
+    //viewer->updatePointCloud(cloud, "cloud");
     _renderWindow->Render();
-    ui->qvtkWidget->repaint();
+    //ui->qvtkWidget->repaint();
     
 
+}
+
+void CloudViewer::saveCurrentCluster()
+{
+    std::vector<int> cluster_indices;
+    for (size_t idx = 0; idx < cloud->points.size(); idx++) {
+        auto &pt = cloud->points.at(idx);
+        if (pt.r == curCluster_R && pt.g == curCluster_G && pt.b == curCluster_B) {
+            cluster_indices.push_back(idx);
+        }
+    }
+    segments[currentCluster] = cluster_indices;
 }
 
 void CloudViewer::loadFile ( std::string file_name )
@@ -349,7 +245,7 @@ void CloudViewer::loadFile ( std::string file_name )
     //viewer->addCoordinateSystem();
     Eigen::Vector4f centroid;
     pcl::compute3DCentroid ( *cloud, centroid );
-/*
+
     viewer->setCameraPosition (
         centroid[0],
         centroid[1] + 2,
@@ -364,9 +260,17 @@ void CloudViewer::loadFile ( std::string file_name )
         0,
         0
     );
-*/
-    std::cout << "centroid: " << centroid[0] << " " << centroid[1] << " " << centroid[2] << std::endl;
 
+    std::cout << "centroid: " << centroid[0] << " " << centroid[1] << " " << centroid[2] << std::endl;
+    _renderWindow->Render();
     ui->qvtkWidget->update();
+
 }
 
+
+
+void CloudViewer::on_spPointPicker_valueChanged(double arg1)
+{
+    interactorStyle->setPointPickerTolerance(arg1);
+    interactorStyle->setPainterTolerance(arg1);
+}

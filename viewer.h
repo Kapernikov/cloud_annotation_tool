@@ -23,6 +23,8 @@
 // Visualization Toolkit (VTK)
 #include <vtkRenderWindow.h>
 #include <vtkGenericOpenGLRenderWindow.h>
+#include "annotatorinteractor.h"
+#include <tuple>
 
 typedef struct feature {
   int id;
@@ -35,6 +37,31 @@ namespace Ui {
   class CloudViewer;
 }
 
+#define TIED_OP(STRUCT, OP) \
+    inline bool operator OP(const STRUCT& lhs, const STRUCT& rhs) \
+    { \
+        return lhs.tie() OP rhs.tie(); \
+    }
+
+#define TIED_COMPARISONS(STRUCT) \
+    TIED_OP(STRUCT, ==) \
+    TIED_OP(STRUCT, !=) \
+    TIED_OP(STRUCT, <) \
+    TIED_OP(STRUCT, <=) \
+    TIED_OP(STRUCT, >=) \
+    TIED_OP(STRUCT, >)
+
+struct ClusterKey {
+    std::string oclass;
+    std::string objectid;
+    std::tuple<std::string, std::string> tie() const { return std::tie(oclass, objectid); }
+
+};
+
+
+TIED_COMPARISONS(ClusterKey)
+
+
 class CloudViewer: public QMainWindow {
   Q_OBJECT
   
@@ -45,25 +72,28 @@ class CloudViewer: public QMainWindow {
   public slots:
     void loadButtonClicked();
     void labelButtonClicked();
-    void reloadButtonClicked();
     void nextBoxChecked();
     void fileItemChanged();
-    void painted(double x, double y, double z, long pointid);
+    void painted(double x, double y, double z, long pointid, bool painting);
     
  protected:
     boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr colorize(pcl::PointCloud<pcl::PointXYZ> &source, int r, int g, int b);
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud, cloud_ann;
-    std::map<std::string, pcl::PointCloud<pcl::PointXYZ>::Ptr> segments;
-    std::map<std::string, pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr> kdtrees;
-    void movePointToAnn(double x, double y, double z, long pointid);
+    std::map<ClusterKey, std::vector<int>> segments;
+    void movePointToAnn(double x, double y, double z, long pointid, bool painting);
     void createSegmentFromAnn(std::string segment_name);
+    void saveCurrentCluster();
 
 
     void loadFile(std::string file_name);
     pcl::KdTreeFLANN<pcl::PointXYZRGBA> kdtree;
 
- private:
+
+private slots:
+    void on_spPointPicker_valueChanged(double arg1);
+
+private:
     Ui::CloudViewer *ui;
     QString load_file_path, current_label_path;
     bool file_labeled;
@@ -74,10 +104,18 @@ class CloudViewer: public QMainWindow {
     bool removing_planes;
     
     vtkSmartPointer <vtkGenericOpenGLRenderWindow> _renderWindow;
+    vtkSmartPointer<AnnotatorInteractor>  interactorStyle;
 
     std::vector<Feature> features;
     std::vector< std::vector<std::string> > labels;
     std::fstream label_file;
+    ClusterKey currentCluster;
+
+    const int curCluster_R = 255;
+    const int curCluster_G = 0;
+    const int curCluster_B = 0;
+
+
 
 
 };
