@@ -2,6 +2,9 @@
 
 * status: unfinished (works, saving labels to json, but buggy)
 
+![Screenshot](screenshot.png?raw=true "Screenshot")
+
+
 * forked from https://github.com/lesterlo/cloud_annotation_tool which was
   forked from https://github.com/yzrobot/cloud_annotation_tool
 
