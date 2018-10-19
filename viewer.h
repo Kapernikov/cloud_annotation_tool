@@ -110,6 +110,9 @@ class CloudViewer: public QMainWindow {
 
 
     private slots:
+    void on_btnSaveCurrent_pressed();
+
+    private slots:
     void on_cmbClass_currentTextChanged(const QString &arg1);
 
     private slots:

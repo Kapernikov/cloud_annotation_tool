@@ -273,6 +273,7 @@ void CloudViewer::movePointToAnn ( double x, double y, double z , long pointid, 
             colors[j+3] = pt.a;
 
         }
+        ui->btnSaveCurrent->setEnabled(true);
     }
 
 
@@ -308,6 +309,7 @@ void CloudViewer::saveCurrentCluster()
         }
     }
     saveJson();
+    ui->btnSaveCurrent->setEnabled(false);
 }
 
 void CloudViewer::loadCluster(std::string oclass, std::string objectid) {
@@ -460,4 +462,9 @@ void CloudViewer::on_txtObjectId_textChanged(const QString &arg1)
 void CloudViewer::on_cmbClass_currentTextChanged(const QString &arg1)
 {
     on_txtObjectId_textChanged(arg1);
+}
+
+void CloudViewer::on_btnSaveCurrent_pressed()
+{
+    saveCurrentCluster();
 }
