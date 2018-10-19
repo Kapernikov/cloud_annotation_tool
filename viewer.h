@@ -25,6 +25,9 @@
 #include <vtkGenericOpenGLRenderWindow.h>
 #include "annotatorinteractor.h"
 #include <tuple>
+#include "json.hpp"
+
+using nlohmann::json;
 
 typedef struct feature {
   int id;
@@ -58,6 +61,15 @@ struct ClusterKey {
 
 };
 
+inline void to_json(json& j, const ClusterKey& p) {
+    j = json{{"oclass", p.oclass}, {"objectid", p.objectid}};
+}
+
+inline void from_json(const json& j, ClusterKey& p) {
+    j.at("oclass").get_to(p.oclass);
+    j.at("objectid").get_to(p.objectid);
+}
+
 
 TIED_COMPARISONS(ClusterKey)
 
@@ -86,6 +98,7 @@ class CloudViewer: public QMainWindow {
     void saveCurrentCluster();
     void loadCluster(std::string oclass, std::string objectid);
     void colorizeCloud(pcl::PointCloud<pcl::PointXYZRGBA> &c, char r, char g, char b, char a);
+    void saveJson();
 
 
     void loadFile(std::string file_name);

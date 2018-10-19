@@ -25,6 +25,16 @@ void CloudViewer::colorizeCloud(pcl::PointCloud<pcl::PointXYZRGBA> &c, char r, c
 
 }
 
+void CloudViewer::saveJson()
+{
+    json j = segments;
+    std::string fn =  ui->listWidget_files->currentItem()->text().toStdString();
+    fn += "_labels.json";
+    std::ofstream out(fn);
+    out << j;
+    out.close();
+}
+
 CloudViewer::CloudViewer ( QWidget *parent ) :
     QMainWindow ( parent ),
     ui ( new Ui::CloudViewer )
@@ -239,6 +249,7 @@ void CloudViewer::saveCurrentCluster()
             ui->tblClusters->item(idx, 2)->setText(QString::number(cluster_indices.size()));
         }
     }
+    saveJson();
 }
 
 void CloudViewer::loadCluster(std::string oclass, std::string objectid) {
@@ -295,7 +306,34 @@ void CloudViewer::loadFile ( std::string file_name )
     //pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA>
     //col ( cloud, 255, 255, 255 );
 
+    ui->tblClusters->clear();
+    std::string fn = file_name;
+    fn += "_labels.json";
+    std::ifstream f(fn.c_str());
+    if (f) {
+        json j;
+        f >> j;
+        segments = j.get<decltype(segments)>();
+        for (auto s: segments) {
+
+            ui->tblClusters->insertRow ( ui->tblClusters->rowCount() );
+            ui->tblClusters->setItem   ( ui->tblClusters->rowCount()-1,
+                                     0,
+                                     new QTableWidgetItem(QString::fromStdString(s.first.oclass)));
+            ui->tblClusters->setItem   ( ui->tblClusters->rowCount()-1,
+                                     1,
+                                     new QTableWidgetItem(QString::fromStdString(s.first.objectid)));
+            ui->tblClusters->setItem   ( ui->tblClusters->rowCount()-1,
+                                     2,
+                                     new QTableWidgetItem(QString::number(s.second.size())));
+        }
+    }
+
+
+    colorizeCloud(*cloud, 255,255,255,255);
+
     viewer->addPointCloud ( cloud, rgba, "cloud" );
+
     //viewer->addCoordinateSystem();
     Eigen::Vector4f centroid;
     pcl::compute3DCentroid ( *cloud, centroid );
