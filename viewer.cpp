@@ -3,6 +3,7 @@
 #include "annotatorinteractor.h"
 #include "vtkGenericOpenGLRenderWindow.h"
 #include "qmessagebox.h"
+#include <cmath>
 #include "qinputdialog.h"
 
 #include <pcl/visualization/common/actor_map.h>
@@ -181,7 +182,6 @@ CloudViewer::CloudViewer ( QWidget *parent ) :
     // Connect UI and their functions.
     connect ( ui->pushButton_load, &QPushButton::clicked, this, &CloudViewer::loadButtonClicked );
     connect ( ui->btnStartStop, &QPushButton::clicked, this, &CloudViewer::labelButtonClicked );
-    connect ( ui->checkBox_next, &QCheckBox::stateChanged, this, &CloudViewer::nextBoxChecked );
     connect ( ui->listWidget_files, &QListWidget::itemSelectionChanged, this, &CloudViewer::fileItemChanged );
 
     context.reset(new QMenu(this));
@@ -280,10 +280,6 @@ void CloudViewer::labelButtonClicked()
     on_txtObjectId_textChanged(QString("boo"));
 }
 
-void CloudViewer::nextBoxChecked()
-{
-    auto_next = ( ui->checkBox_next->isChecked() ) ? true : false;
-}
 
 void CloudViewer::fileItemChanged()
 {
@@ -324,6 +320,29 @@ void CloudViewer::movePointToAnn ( double x, double y, double z , long pointid, 
     std::vector<float> distances ( K );
     pcl::PointXYZRGBA xyz;
     xyz.x = x; xyz.y =  y; xyz.z = z;
+    bool allowStealing = ui->chkAllowStealing->isChecked();
+    bool isClipping = ui->chkEnableClipping->isChecked();
+
+    if (isClipping) {
+        std::vector<pcl::visualization::Camera> cameras;
+        viewer->getCameras(cameras);
+        double cam_x = cameras[0].pos[0];
+        double cam_y = cameras[0].pos[1];
+        double cam_z = cameras[0].pos[2];
+        double distance = sqrt(pow(cam_x - x,2) + pow(cam_y - y, 2) + pow(cam_z - z, 2));
+        if (distance > ui->spMaxD->value() || distance < ui->spMinD->value()) {
+            return;
+        }
+        if (x > ui->spMaxX->value() || x < ui->spMinX->value()) {
+            return;
+        }
+        if (y > ui->spMaxY->value() || y < ui->spMinY->value()) {
+            return;
+        }
+        if (z > ui->spMaxZ->value() || z < ui->spMinZ->value()) {
+            return;
+        }
+    }
 
     // no updatePointCloud, too slow
     // Check to see if this ID entry already exists (has it been already added to the visualizer?)
@@ -345,6 +364,9 @@ void CloudViewer::movePointToAnn ( double x, double y, double z , long pointid, 
             auto &idx = indices.at(i);
             auto &pt = cloud->points.at(idx);
             //std::cout << "found point : " << (int)(pt.r) << " " << (int)(pt.g) << " " << (int)(pt.b) << " " << indices.at(0) << " " << pointid <<  std::endl;
+            if (pt.r == pasCluster_R && pt.g == pasCluster_G && pt.b == pasCluster_B && (!allowStealing)) {
+                continue;
+            }
             if (painting) {
                 pt.r = curCluster_R;
                 pt.g = curCluster_G;

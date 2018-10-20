@@ -86,7 +86,6 @@ class CloudViewer: public QMainWindow {
   public slots:
     void loadButtonClicked();
     void labelButtonClicked();
-    void nextBoxChecked();
     void fileItemChanged();
     void painted(double x, double y, double z, long pointid, bool painting);
     

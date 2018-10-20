@@ -70,9 +70,9 @@
        <widget class="QListWidget" name="listWidget_files"/>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_next">
+       <widget class="QCheckBox" name="chkAllowStealing">
         <property name="text">
-         <string> automatically load next file</string>
+         <string>allow stealing from other clusters</string>
         </property>
        </widget>
       </item>
