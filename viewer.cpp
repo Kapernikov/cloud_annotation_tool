@@ -74,6 +74,22 @@ void CloudViewer::updateCameraClipping()
     }
 }
 
+void CloudViewer::stealPointsFromOtherClusters(ClusterKey k)
+{
+    std::vector<int> idxs = segments[k];
+    for (auto it: segments) {
+        if (it.first != k) {
+            std::vector<int> new_for_it;
+            for (auto sidx: it.second)  {
+                if (std::find(idxs.begin(), idxs.end() , sidx) == idxs.end()) {
+                    new_for_it.push_back(sidx);
+                }
+            }
+            segments[it.first] = new_for_it;
+        }
+    }
+}
+
 void CloudViewer::confirmDeleteCurrentCluster()
 {
     QMessageBox::StandardButton reply;
@@ -128,7 +144,8 @@ void CloudViewer::flyToCluster(ClusterKey &key)
     }
     Eigen::Vector4f centroid;
     pcl::compute3DCentroid ( *c, centroid );
-    interactorStyle->GetInteractor()->FlyTo(interactorStyle->GetCurrentRenderer(), centroid[0], centroid[1], centroid[2]);
+    auto ren = _renderWindow->GetRenderers()->GetFirstRenderer();
+    interactorStyle->GetInteractor()->FlyTo(ren, centroid[0], centroid[1], centroid[2]);
     _renderWindow->Render();
 }
 
@@ -410,6 +427,7 @@ void CloudViewer::saveCurrentCluster()
         }
     }
     segments[currentCluster] = cluster_indices;
+    stealPointsFromOtherClusters(currentCluster);
     std::cout << "saved segment " << currentCluster.objectid << " with " << cluster_indices.size() << " points" << std::endl;
     for (int idx=0; idx < ui->tblClusters->rowCount() ; idx++) {
         auto oclass =  ui->tblClusters->item( idx,

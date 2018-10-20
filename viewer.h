@@ -93,7 +93,7 @@ class CloudViewer: public QMainWindow {
     boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr colorize(pcl::PointCloud<pcl::PointXYZ> &source, int r, int g, int b);
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud, cloud_ann;
-    std::map<ClusterKey, std::vector<int>> segments;
+    std::map<ClusterKey, std::vector<int>> segments; // todo must convert to std::set, will be much faster for point stealing ea
     void movePointToAnn(double x, double y, double z, long pointid, bool painting);
     void createSegmentFromAnn(std::string segment_name);
     void saveCurrentCluster();
@@ -102,6 +102,7 @@ class CloudViewer: public QMainWindow {
     void saveJson();
     void resetClippingSpinboxes();
     void updateCameraClipping();
+    void stealPointsFromOtherClusters(ClusterKey k);
 
     void confirmDeleteCurrentCluster();
     void renameCurrentCluster();
