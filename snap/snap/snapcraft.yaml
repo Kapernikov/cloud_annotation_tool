@@ -9,6 +9,7 @@ parts:
   vtk:
     plugin: cmake
     source: https://github.com/Kitware/VTK.git
+    source-type: git
     source-branch: v8.1.1
     configflags:
       - -DCMAKE_BUILD_TYPE=Release 
@@ -51,6 +52,7 @@ parts:
   pcl:
       after: [vtk]
       source: https://github.com/PointCloudLibrary/pcl
+      source-type: git
       source-branch: master
       plugin: cmake
       build-packages:
@@ -72,6 +74,7 @@ parts:
   annotationtool:
       after: [vtk, pcl]
       source: https://github.com/Kapernikov/cloud_annotation_tool
+      source-type: git
       source-branch: master
       plugin: cmake
     
