@@ -1,0 +1,77 @@
+name: my-snap-name
+version: '0.1'
+summary: Single-line elevator pitch for your amazing snap
+description: This is my-snap's description. You have a paragraph or two to tell the
+grade: devel
+confinement: devmode
+
+parts:
+  vtk:
+    plugin: cmake
+    source: https://github.com/Kitware/VTK.git
+    source-branch: v8.1.1
+    configflags:
+      - -DCMAKE_BUILD_TYPE=Release 
+      - -DBUILD_TESTING=OFF 
+      - -DVTK_Group_Qt=ON 
+      - -DVTK_Group_Rendering=ON 
+      - -DVTK_Group_Views=ON 
+      - -DVTK_Group_MPI=ON 
+      - -DVTK_PYTHON_VERSION=3 
+      - -DVTK_WRAP_PYTHON=ON
+    build-packages: 
+      - build-essential 
+      - cmake 
+      - qttools5-dev-tools 
+      - libqt5opengl5-dev 
+      - libqt5x11extras5-dev 
+      - qtbase5-dev 
+      - python3-dev 
+      - python3-pip 
+      - git 
+      - wget
+      - unzip 
+      - yasm 
+      - libpng-dev 
+      - libavformat-dev 
+      - libtiff-dev 
+      - libswscale-dev 
+      - llvm-dev 
+      - libeigen3-dev 
+      - libflann-dev 
+      - libqhull-dev 
+      - libopenni-dev 
+      - libboost-dev
+      - libboost-system-dev 
+      - libboost-filesystem-dev 
+      - libboost-thread-dev 
+      - libboost-date-time-dev 
+      - libboost-iostreams-dev
+
+  pcl:
+      after: [vtk]
+      source: https://github.com/PointCloudLibrary/pcl
+      source-branch: master
+      plugin: cmake
+      build-packages:
+        - libusb-dev 
+        - libusb-1.0-0-dev
+      configflags:
+        - -DCMAKE_BUILD_TYPE=Release 
+        - -DBUILD_features=ON 
+        - -DBUILD_filters=ON 
+        - -DBUILD_geometry=ON 
+        - -DBUILD_search=ON 
+        - -DBUILD_tools=ON 
+        - -DBUILD_visualization=ON 
+        - -DBUILD_tracking=ON 
+        - -DBUILD_apps=ON 
+        - -DPCL_QT_VERSION=5 
+        - -DBUILD_apps_point_cloud_editor=ON
+
+  annotationtool:
+      after: [vtk, pcl]
+      source: https://github.com/Kapernikov/cloud_annotation_tool
+      source-branch: master
+      plugin: cmake
+    
