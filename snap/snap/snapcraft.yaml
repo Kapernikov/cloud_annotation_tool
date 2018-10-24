@@ -1,9 +1,14 @@
-name: my-snap-name
+name: cloud-annotation-tool
 version: '0.1'
+base: core18
 summary: Single-line elevator pitch for your amazing snap
 description: This is my-snap's description. You have a paragraph or two to tell the
 grade: devel
 confinement: devmode
+
+apps:
+  cloud-annotation-tool:
+     command: bin/cloud_annotation_tool
 
 parts:
   vtk:
@@ -20,6 +25,18 @@ parts:
       - -DVTK_Group_MPI=ON 
       - -DVTK_PYTHON_VERSION=3 
       - -DVTK_WRAP_PYTHON=ON
+    stage-packages:
+      - qt5dxcb-plugin
+      - libqt5gui5
+      - libpng16-16
+      - libqhull7
+      - libqt5opengl5
+      - libqt5x11extras5
+      - libswscale4
+      - libavformat57
+      - libopenni0
+      - libopenni2-0
+      - python3-minimal
     build-packages: 
       - build-essential 
       - cmake 
@@ -55,6 +72,8 @@ parts:
       source-type: git
       source-branch: master
       plugin: cmake
+      stage-packages:
+        - libusb-1.0-0
       build-packages:
         - libusb-dev 
         - libusb-1.0-0-dev
