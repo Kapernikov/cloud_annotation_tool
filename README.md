@@ -13,6 +13,26 @@
 * i had to modify the tool to use QVTKOpenGLWidget instead of QVTKWidget
   (because otherwise point picking does not work reliably)
 
+## Building
+
+Because this project needs VTK8 and pcl master (1.8.1 is NOT new enough), it can be a hassle to
+set up. The easiest way to set up the project is building a snap:
+
+* cd snap
+* snapcraft
+* snap install --devmode *.snap
+* cloud-annotator-tool
+
+Alternatively, if you want to make changes and you don't have a nvidia card,
+running in docker might also be suitable:
+
+* build the docker image:  `docker build -t vtk8_pclmaster docker/`
+* then disable xhost auth `xhost +` (or use x11-docker)
+* then run a container: `docker run -it --rm -v $PWD:$PWD -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix vtk8_pclmaster /bin/bash`
+* inside the container, go back to the folder where you checked out the source and do `cd cloud_annotator_tool; mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=Release ..; make -j3`
+* now you can start the cloud annotator tool
+
+
 ## Remaining issues ##
 
 * sometimes after panning/zooming/flying the cloud "looses" a number of points. looks like a VTK
@@ -20,6 +40,7 @@
 
 * clipping settings do not work properly yet
 
+* vtk8 glsl issue, use MESA_GL_VERSION_OVERRIDE=3.2 to work around (see below)
 
 ## Running ##
 
@@ -32,14 +53,6 @@ then run the tool as follows: MESA_GL_VERSION_OVERRIDE=3.2 ./cloud_annotation_to
 * to add points to the cluster, move your mouse while holding the "p" key. to remove points from the cluster, move your mouse by holding the "e" key
 * the GUI saves a json file every time you switch to another cluster (so switch to another cluster before quitting). the json file is also load back when you open the pcd file
 
-## Compiling and running using a docker image ##
-
-* build the docker image:  `docker build -t vtk8_pclmaster docker/`
-* then disable xhost auth `xhost +` (or use x11-docker)
-* then run a container: `docker run -it --rm -v $PWD:$PWD -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix vtk8_pclmaster /bin/bash`
-* inside the container, go back to the folder where you checked out the source and do `cd cloud_annotator_tool; mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=Release ..; make -j3`
-* now you can start the cloud annotator tool
-
 ### Prerequisites ###
 
 #### New
@@ -47,10 +60,3 @@ then run the tool as follows: MESA_GL_VERSION_OVERRIDE=3.2 ./cloud_annotation_to
 * Qt 5.3: `sudo apt-get install qtbase5-dev qt5-qmake`
 * VTK 8.1: please compile from master
 * PCL MASTER branch: From Source git master branch of pcl
-
-### Build script ###
-
-* `mkdir build`
-* `cd build`
-* `cmake ..`
-* `make`
