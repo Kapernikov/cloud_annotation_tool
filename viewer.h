@@ -130,6 +130,7 @@ private:
     bool removing_outliers;
     bool downsampling;
     bool removing_planes;
+    bool is_dirty = false;
     
     vtkSmartPointer <vtkGenericOpenGLRenderWindow> _renderWindow;
     vtkSmartPointer<AnnotatorInteractor>  interactorStyle;

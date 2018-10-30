@@ -403,6 +403,7 @@ void CloudViewer::movePointToAnn ( double x, double y, double z , long pointid, 
 
         }
         ui->btnSaveCurrent->setEnabled(true);
+        is_dirty = true;
     }
 
 
@@ -440,6 +441,7 @@ void CloudViewer::saveCurrentCluster()
     }
     saveJson();
     ui->btnSaveCurrent->setEnabled(false);
+    is_dirty = false;
 }
 
 void CloudViewer::loadCluster(std::string oclass, std::string objectid) {
@@ -465,6 +467,7 @@ void CloudViewer::loadFile ( std::string file_name )
 {
     cloud.reset ( new pcl::PointCloud<pcl::PointXYZRGBA> );
     cloud_ann.reset(new pcl::PointCloud<pcl::PointXYZRGBA> );
+    is_dirty = false;
 
     pcl::PointCloud<pcl::PointXYZ> xyz_cloud, cloud_tmp;
 
@@ -573,7 +576,9 @@ void CloudViewer::on_tblClusters_itemSelectionChanged()
                                               0)->text().toStdString();
         auto objectid =  ui->tblClusters->item( row,
                                                 1)->text().toStdString();
-        saveCurrentCluster();
+        if (is_dirty) {
+            saveCurrentCluster();
+        }
         loadCluster(oclass, objectid);
     }
 }

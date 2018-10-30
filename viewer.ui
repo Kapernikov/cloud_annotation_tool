@@ -131,6 +131,31 @@
             </item>
             <item>
              <property name="text">
+              <string>support_structure</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>facade_wall_bridge</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>vegetation</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>rails</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>ground</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>other</string>
              </property>
             </item>
