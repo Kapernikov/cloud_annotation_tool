@@ -381,7 +381,7 @@ void CloudViewer::movePointToAnn ( double x, double y, double z , long pointid, 
             auto &idx = indices.at(i);
             auto &pt = cloud->points.at(idx);
             //std::cout << "found point : " << (int)(pt.r) << " " << (int)(pt.g) << " " << (int)(pt.b) << " " << indices.at(0) << " " << pointid <<  std::endl;
-            if (pt.r == pasCluster_R && pt.g == pasCluster_G && pt.b == pasCluster_B && (!allowStealing)) {
+            if (pt.r == pasCluster_R && pt.g == pasCluster_G && pt.b == pasCluster_B && ((!allowStealing)  || (!painting))) {
                 continue;
             }
             if (painting) {
