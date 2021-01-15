@@ -2,6 +2,7 @@
 #include "build/ui_viewer.h"
 #include "annotatorinteractor.h"
 #include "vtkGenericOpenGLRenderWindow.h"
+#include "vtkRenderWindowInteractor.h"
 #include "qmessagebox.h"
 #include <cmath>
 #include "qinputdialog.h"
