@@ -1,6 +1,6 @@
 name: cloud-annotation-tool
 version: '0.1'
-base: core18
+base: core20
 summary: Single-line elevator pitch for your amazing snap
 description: This is my-snap's description. You have a paragraph or two to tell the
 grade: devel
@@ -15,8 +15,8 @@ parts:
     plugin: cmake
     source: https://github.com/Kitware/VTK.git
     source-type: git
-    source-branch: v8.1.1
-    configflags:
+    source-branch: v9.0.1
+    cmake-parameters:
       - -DCMAKE_BUILD_TYPE=Release 
       - -DBUILD_TESTING=OFF 
       - -DVTK_Group_Qt=ON 
@@ -32,16 +32,16 @@ parts:
       - libqhull7
       - libqt5opengl5
       - libqt5x11extras5
-      - libswscale4
-      - libavformat57
+      - libswscale5
+      - libavformat58
       - libopenni0
       - libopenni2-0
       - python3-minimal
       - libxt6
-      - libhwloc5
+      - libhwloc15
       - libltdl7
-      - libopenmpi2
-      - libpython3.6
+      - libopenmpi3
+      - libpython3.9
     build-packages: 
       - build-essential 
       - cmake 
@@ -80,17 +80,17 @@ parts:
       stage-packages:
         - libusb-1.0-0
         - libglu1-mesa
-        - libboost-chrono1.65.1
-        - libboost-filesystem1.65.1
-        - libboost-iostreams1.65.1
-        - libboost-system1.65.1
-        - libboost-thread1.65.1
+        - libboost-chrono1.71.0
+        - libboost-filesystem1.71.0
+        - libboost-iostreams1.71.0
+        - libboost-system1.71.0
+        - libboost-thread1.71.0
         - libflann1.9
         
       build-packages:
         - libusb-dev 
         - libusb-1.0-0-dev
-      configflags:
+      cmake-parameters:
         - -DCMAKE_BUILD_TYPE=Release 
         - -DBUILD_features=ON 
         - -DBUILD_filters=ON 
@@ -104,7 +104,7 @@ parts:
         - -DBUILD_apps_point_cloud_editor=ON
 
   annotationtool:
-      after: [vtk, pcl, desktop-qt5]
+      after: [vtk, pcl]
       source: https://github.com/Kapernikov/cloud_annotation_tool
       source-type: git
       source-branch: master
