@@ -1,5 +1,5 @@
 name: cloud-annotation-tool
-version: '0.1'
+version: '0.2'
 base: core20
 summary: Single-line elevator pitch for your amazing snap
 description: This is my-snap's description. You have a paragraph or two to tell the
@@ -8,14 +8,70 @@ confinement: devmode
 
 apps:
   cloud-annotation-tool:
-     command: desktop-launch cloud_annotation_tool
+     command: usr/local/bin/cloud_annotation_tool
+     command-chain: [ bin/desktop-launch ]
+     plugs:
+       - home
+       - opengl
+       - pulseaudio
+       - x11
+       - desktop
+       - desktop-legacy
+       - wayland
+
 
 parts:
+  desktop-qt5:
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-subdir: qt
+    plugin: make
+    make-parameters: ["FLAVOR=qt5"]
+    build-packages:
+      - build-essential
+      - qtbase5-dev
+      - dpkg-dev
+    stage-packages:
+      - libxkbcommon0
+      - ttf-ubuntu-font-family
+      - dmz-cursor-theme
+      - light-themes
+      - adwaita-icon-theme
+      - gnome-themes-standard
+      - shared-mime-info
+      - libqt5gui5
+      - libgdk-pixbuf2.0-0
+      - libqt5svg5 # for loading icon themes which are svg
+      - try: [appmenu-qt5] # not available on core18
+      - locales-all
+      - xdg-user-dirs
+      - fcitx-frontend-qt5
+
+  qt5-xdgdesktopportal-platform:
+    plugin: nil
+    stage-packages:
+      - qt5-xdgdesktopportal-platformtheme
+
+
+  qtwayland:
+    source: https://github.com/qt/qtwayland.git
+    source-depth: 1
+    source-tag: v5.12.8
+    plugin: dump
+    override-build: |
+      qmake
+      make -j$(nproc)
+      make INSTALL_ROOT="$SNAPCRAFT_PART_INSTALL" install
+    after:
+      - desktop-qt5
+    stage: [-./usr/lib]
+    prime: [-./*]
+
   vtk:
     plugin: cmake
     source: https://github.com/Kitware/VTK.git
     source-type: git
     source-branch: v8.2.0
+    after: [qtwayland, desktop-qt5]
     cmake-parameters:
       - -DCMAKE_BUILD_TYPE=Release 
       - -DBUILD_TESTING=OFF 
@@ -78,7 +134,7 @@ parts:
       after: [vtk]
       source: https://github.com/PointCloudLibrary/pcl
       source-type: git
-      source-branch: master
+      source-branch: pcl-1.11.1
       plugin: cmake
       stage-packages:
         - libusb-1.0-0
@@ -99,18 +155,18 @@ parts:
         - -DBUILD_filters=ON 
         - -DBUILD_geometry=ON 
         - -DBUILD_search=ON 
-        - -DBUILD_tools=ON 
+        - -DBUILD_tools=OFF
         - -DBUILD_visualization=ON 
         - -DBUILD_tracking=ON 
-        - -DBUILD_apps=ON 
+        - -DBUILD_apps=OFF
         - -DPCL_QT_VERSION=5 
-        - -DBUILD_apps_point_cloud_editor=ON
+        - -DBUILD_apps_point_cloud_editor=OFF
         - -DCMAKE_INSTALL_PREFIX=/usr
 
   annotationtool:
       after: [vtk, pcl]
-      source: https://github.com/Kapernikov/cloud_annotation_tool
-      source-type: git
-      source-branch: master
+      source: .
       plugin: cmake
+      build-environment:
+        - LD_LIBRARY_PATH: /root/stage/usr/lib/
     
